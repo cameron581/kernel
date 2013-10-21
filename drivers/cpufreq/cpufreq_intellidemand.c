@@ -40,26 +40,28 @@
  * It helps to keep variable names smaller, simpler
  */
 
-#define DEF_FREQUENCY_DOWN_DIFFERENTIAL                (10)
-#define DEF_FREQUENCY_UP_THRESHOLD                (75)
-#define DEF_SAMPLING_DOWN_FACTOR                (1)
-#define BOOSTED_SAMPLING_DOWN_FACTOR                (10)
-#define MAX_SAMPLING_DOWN_FACTOR                (100000)
-#define MICRO_FREQUENCY_DOWN_DIFFERENTIAL        (3)
-#define MICRO_FREQUENCY_UP_THRESHOLD                (75)
-#define MICRO_FREQUENCY_MIN_SAMPLE_RATE                (15000)
-#define MIN_FREQUENCY_UP_THRESHOLD                (11)
-#define MAX_FREQUENCY_UP_THRESHOLD                (100)
-#define MIN_FREQUENCY_DOWN_DIFFERENTIAL                (1)
-#define DEFAULT_FREQ_BOOST_TIME                        (3500000)
-#define DEF_SAMPLING_RATE                        (50000)
-#define BOOSTED_SAMPLING_RATE                        (15000)
-#define DBS_INPUT_EVENT_MIN_FREQ                (1026000)
-#define DBS_SYNC_FREQ                                (702000)
-#define DBS_OPTIMAL_FREQ                        (1566000)
+
+#define DEF_FREQUENCY_DOWN_DIFFERENTIAL		(10)
+#define DEF_FREQUENCY_UP_THRESHOLD		(75)
+#define DEF_SAMPLING_DOWN_FACTOR		(1)
+#define BOOSTED_SAMPLING_DOWN_FACTOR		(10)
+#define MAX_SAMPLING_DOWN_FACTOR		(100000)
+#define MICRO_FREQUENCY_DOWN_DIFFERENTIAL	(3)
+#define MICRO_FREQUENCY_UP_THRESHOLD		(75)
+#define MICRO_FREQUENCY_MIN_SAMPLE_RATE		(15000)
+#define MIN_FREQUENCY_UP_THRESHOLD		(11)
+#define MAX_FREQUENCY_UP_THRESHOLD		(100)
+#define MIN_FREQUENCY_DOWN_DIFFERENTIAL		(1)
+#define DEFAULT_FREQ_BOOST_TIME			(3500000)
+#define DEF_SAMPLING_RATE			(50000)
+#define BOOSTED_SAMPLING_RATE			(15000)
+#define DBS_INPUT_EVENT_MIN_FREQ		(1036800)
+#define DBS_SYNC_FREQ				(729600)
+#define DBS_OPTIMAL_FREQ			(1574400)
 
 #ifdef CONFIG_CPUFREQ_ID_PERFLOCK
-#define DBS_PERFLOCK_MIN_FREQ                        (594000)
+#define DBS_PERFLOCK_MIN_FREQ			(576000)
+
 #endif
 
 static u64 freq_boosted_time;
@@ -173,6 +175,7 @@ static struct dbs_tuners {
         unsigned int boostfreq;
         unsigned int two_phase_freq;
 } dbs_tuners_ins = {
+<<<<<<< HEAD
         .up_threshold_multi_core = DEF_FREQUENCY_UP_THRESHOLD,
         .up_threshold = DEF_FREQUENCY_UP_THRESHOLD,
         .sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR,
@@ -185,6 +188,20 @@ static struct dbs_tuners {
         .optimal_freq = DBS_OPTIMAL_FREQ,
         .freq_boost_time = DEFAULT_FREQ_BOOST_TIME,
         .two_phase_freq = 0,
+=======
+	.up_threshold_multi_core = DEF_FREQUENCY_UP_THRESHOLD,
+	.up_threshold = 95,
+	.sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR,
+	.down_differential = DEF_FREQUENCY_DOWN_DIFFERENTIAL,
+	.down_differential_multi_core = MICRO_FREQUENCY_DOWN_DIFFERENTIAL,
+	.up_threshold_any_cpu_load = 85,
+	.ignore_nice = 0,
+	.powersave_bias = 0,
+	.sync_freq = DBS_SYNC_FREQ,
+	.optimal_freq = DBS_OPTIMAL_FREQ,
+	.freq_boost_time = DEFAULT_FREQ_BOOST_TIME,
+	.two_phase_freq = 1267200,
+>>>>>>> 44d5c21... cpufreq: intellidemand: update default settings for Snapdragon 800 Socs
 };
 
 static inline cputime64_t get_cpu_idle_time_jiffy(unsigned int cpu,
