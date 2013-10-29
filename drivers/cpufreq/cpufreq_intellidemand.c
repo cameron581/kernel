@@ -32,36 +32,38 @@
 #include <linux/syscalls.h>
 #include <linux/highuid.h>
 
+#ifdef CONFIG_POWERSUSPEND
+#include <linux/powersuspend.h>
+#endif
+
 #define INTELLIDEMAND_MAJOR_VERSION        4
-#define INTELLIDEMAND_MINOR_VERSION        3
+#define INTELLIDEMAND_MINOR_VERSION        4
 
 /*
  * dbs is used in this file as a shortform for demandbased switching
  * It helps to keep variable names smaller, simpler
  */
 
-
-#define DEF_FREQUENCY_DOWN_DIFFERENTIAL		(10)
-#define DEF_FREQUENCY_UP_THRESHOLD		(75)
-#define DEF_SAMPLING_DOWN_FACTOR		(1)
-#define BOOSTED_SAMPLING_DOWN_FACTOR		(10)
-#define MAX_SAMPLING_DOWN_FACTOR		(100000)
-#define MICRO_FREQUENCY_DOWN_DIFFERENTIAL	(3)
-#define MICRO_FREQUENCY_UP_THRESHOLD		(75)
-#define MICRO_FREQUENCY_MIN_SAMPLE_RATE		(15000)
-#define MIN_FREQUENCY_UP_THRESHOLD		(11)
-#define MAX_FREQUENCY_UP_THRESHOLD		(100)
-#define MIN_FREQUENCY_DOWN_DIFFERENTIAL		(1)
-#define DEFAULT_FREQ_BOOST_TIME			(3500000)
-#define DEF_SAMPLING_RATE			(50000)
-#define BOOSTED_SAMPLING_RATE			(15000)
-#define DBS_INPUT_EVENT_MIN_FREQ		(1036800)
-#define DBS_SYNC_FREQ				(729600)
-#define DBS_OPTIMAL_FREQ			(1574400)
+#define DEF_FREQUENCY_DOWN_DIFFERENTIAL                (10)
+#define DEF_FREQUENCY_UP_THRESHOLD                (75)
+#define DEF_SAMPLING_DOWN_FACTOR                (1)
+#define BOOSTED_SAMPLING_DOWN_FACTOR                (10)
+#define MAX_SAMPLING_DOWN_FACTOR                (100000)
+#define MICRO_FREQUENCY_DOWN_DIFFERENTIAL        (3)
+#define MICRO_FREQUENCY_UP_THRESHOLD                (95)
+#define MICRO_FREQUENCY_MIN_SAMPLE_RATE                (15000)
+#define MIN_FREQUENCY_UP_THRESHOLD                (11)
+#define MAX_FREQUENCY_UP_THRESHOLD                (100)
+#define MIN_FREQUENCY_DOWN_DIFFERENTIAL                (1)
+#define DEFAULT_FREQ_BOOST_TIME                        (4000000)
+#define DEF_SAMPLING_RATE                        (50000)
+#define BOOSTED_SAMPLING_RATE                        (15000)
+#define DBS_INPUT_EVENT_MIN_FREQ                (1036800)
+#define DBS_SYNC_FREQ                                (729600)
+#define DBS_OPTIMAL_FREQ                        (1574400)
 
 #ifdef CONFIG_CPUFREQ_ID_PERFLOCK
-#define DBS_PERFLOCK_MIN_FREQ			(576000)
-
+#define DBS_PERFLOCK_MIN_FREQ                        (576000)
 #endif
 
 static u64 freq_boosted_time;
@@ -78,6 +80,9 @@ static u64 freq_boosted_time;
 #define MIN_SAMPLING_RATE_RATIO                        (2)
 
 static unsigned int min_sampling_rate;
+#ifdef CONFIG_POWERSUSPEND
+static unsigned long stored_sampling_rate;
+#endif
 
 #define LATENCY_MULTIPLIER                        (1000)
 #define MIN_LATENCY_MULTIPLIER                        (20)
@@ -87,7 +92,7 @@ static unsigned int min_sampling_rate;
 #define POWERSAVE_BIAS_MINLEVEL                        (-1000)
 
 /* have the timer rate booted for this much time 2.5s*/
-#define TIMER_RATE_BOOST_TIME 2500000
+#define TIMER_RATE_BOOST_TIME 4000000
 static int sampling_rate_boosted;
 static u64 sampling_rate_boosted_time;
 static unsigned int current_sampling_rate = DEF_SAMPLING_RATE;
@@ -175,33 +180,19 @@ static struct dbs_tuners {
         unsigned int boostfreq;
         unsigned int two_phase_freq;
 } dbs_tuners_ins = {
-<<<<<<< HEAD
         .up_threshold_multi_core = DEF_FREQUENCY_UP_THRESHOLD,
-        .up_threshold = DEF_FREQUENCY_UP_THRESHOLD,
+        .up_threshold = 95,
         .sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR,
         .down_differential = DEF_FREQUENCY_DOWN_DIFFERENTIAL,
         .down_differential_multi_core = MICRO_FREQUENCY_DOWN_DIFFERENTIAL,
-        .up_threshold_any_cpu_load = DEF_FREQUENCY_UP_THRESHOLD,
+        .up_threshold_any_cpu_load = 85,
         .ignore_nice = 0,
         .powersave_bias = 0,
         .sync_freq = DBS_SYNC_FREQ,
         .optimal_freq = DBS_OPTIMAL_FREQ,
         .freq_boost_time = DEFAULT_FREQ_BOOST_TIME,
-        .two_phase_freq = 0,
-=======
-	.up_threshold_multi_core = DEF_FREQUENCY_UP_THRESHOLD,
-	.up_threshold = 95,
-	.sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR,
-	.down_differential = DEF_FREQUENCY_DOWN_DIFFERENTIAL,
-	.down_differential_multi_core = MICRO_FREQUENCY_DOWN_DIFFERENTIAL,
-	.up_threshold_any_cpu_load = 85,
-	.ignore_nice = 0,
-	.powersave_bias = 0,
-	.sync_freq = DBS_SYNC_FREQ,
-	.optimal_freq = DBS_OPTIMAL_FREQ,
-	.freq_boost_time = DEFAULT_FREQ_BOOST_TIME,
-	.two_phase_freq = 1267200,
->>>>>>> 44d5c21... cpufreq: intellidemand: update default settings for Snapdragon 800 Socs
+        .boostfreq = 1267200,
+        .two_phase_freq = 1728000,
 };
 
 static inline cputime64_t get_cpu_idle_time_jiffy(unsigned int cpu,
@@ -1479,6 +1470,30 @@ static int cpufreq_governor_dbs(struct cpufreq_policy *policy,
         return 0;
 }
 
+#ifdef CONFIG_POWERSUSPEND
+static void cpufreq_intellidemand_power_suspend(struct power_suspend *h)
+{
+        mutex_lock(&dbs_mutex);
+        stored_sampling_rate = dbs_tuners_ins.sampling_rate;
+        dbs_tuners_ins.sampling_rate = DEF_SAMPLING_RATE * 6;
+        update_sampling_rate(dbs_tuners_ins.sampling_rate);
+        mutex_unlock(&dbs_mutex);
+}
+
+static void cpufreq_intellidemand_power_resume(struct power_suspend *h)
+{
+        mutex_lock(&dbs_mutex);
+        dbs_tuners_ins.sampling_rate = stored_sampling_rate;
+        update_sampling_rate(dbs_tuners_ins.sampling_rate);
+        mutex_unlock(&dbs_mutex);
+}
+
+static struct power_suspend cpufreq_intellidemand_power_suspend_info = {
+        .suspend = cpufreq_intellidemand_power_suspend,
+        .resume = cpufreq_intellidemand_power_resume,
+};
+#endif
+
 static int __init cpufreq_gov_dbs_init(void)
 {
         u64 idle_time;
@@ -1520,6 +1535,9 @@ static int __init cpufreq_gov_dbs_init(void)
                 dbs_work->cpu = i;
         }
 
+#ifdef CONFIG_POWERSUSPEND
+        register_power_suspend(&cpufreq_intellidemand_power_suspend_info);
+#endif
         return cpufreq_register_governor(&cpufreq_gov_intellidemand);
 }
 
@@ -1533,6 +1551,10 @@ static void __exit cpufreq_gov_dbs_exit(void)
                         &per_cpu(id_cpu_dbs_info, i);
                 mutex_destroy(&this_dbs_info->timer_mutex);
         }
+
+#ifdef CONFIG_POWERSUSPEND
+        unregister_power_suspend(&cpufreq_intellidemand_power_suspend_info);
+#endif
         destroy_workqueue(input_wq);
 }
 
