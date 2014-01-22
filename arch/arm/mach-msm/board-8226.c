@@ -45,6 +45,7 @@
 #include <mach/rpm-smd.h>
 #include <mach/rpm-regulator-smd.h>
 #include <mach/msm_smem.h>
+#include <linux/msm_thermal.h>
 #include "board-dt.h"
 #include "clock.h"
 #include "platsmp.h"
@@ -81,6 +82,8 @@ static struct of_dev_auxdata msm8226_auxdata_lookup[] __initdata = {
                         "msm_sdcc.2", NULL),
         OF_DEV_AUXDATA("qcom,sdhci-msm", 0xF9864900, \
                         "msm_sdcc.3", NULL),
+        OF_DEV_AUXDATA("qcom,hsic-host", 0xF9A00000, "msm_hsic_host", NULL),
+
         {}
 };
 
@@ -123,11 +126,7 @@ void __init msm8226_add_drivers(void)
         else
                 msm_clock_init(&msm8226_clock_init_data);
         tsens_tm_init_driver();
-#ifdef CONFIG_INTELLI_THERMAL
-        msm_thermal_init(NULL);
-#else
-        msm_thermal_device_init(NULL);
-#endif
+        msm_thermal_device_init();
 }
 
 void __init msm8226_init(void)
