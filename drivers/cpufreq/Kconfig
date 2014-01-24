@@ -128,6 +128,11 @@ config CPU_FREQ_DEFAULT_GOV_HYPER
          bool "HYPER"
          select CPU_FREQ_GOV_HYPER 
 
+config CPU_FREQ_DEFAULT_GOV_INTERACTIVEX
+         bool "interactiveX"
+         select CPU_FREQ_GOV_INTERACTIVEX
+	  help
+            Use the CPUFreq governor 'interactiveX' as default.
 endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE
@@ -245,6 +250,14 @@ config CPU_FREQ_GOV_INTELLIDEMAND
 
           If in doubt, say N.
           
+config CPU_FREQ_GOV_INTERACTIVEX
+        tristate "'interactiveX' cpufreq governor"
+        depends on CPU_FREQ
+        help
+          'interactiveX' - interactive governor with early suspend support added.
+          This governor uses hotplug to shutdown and start up cpu1 when suspended.
+          If in doubt, say N.  
+ 
 config CPU_FREQ_GOV_HYPER
         tristate "'HYPER' cpufreq policy governor"
         depends on CPU_FREQ 
